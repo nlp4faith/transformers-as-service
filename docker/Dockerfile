@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:1.12.0-gpu-py3
+FROM pytorch/pytorch
 RUN pip install transformer-as-service[http] transformer
 RUN mkdir -p /app
 COPY ./entrypoint.sh /app
