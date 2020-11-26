@@ -73,7 +73,7 @@ def check_max_seq_len(value):
 
 def get_args_parser():
     from . import __version__
-    from .graph import PoolingStrategy
+    # from .graph import PoolingStrategy
 
     parser = argparse.ArgumentParser(description='Start a BertServer for serving')
 
@@ -102,9 +102,9 @@ def get_args_parser():
     group2.add_argument('-pooling_layer', type=int, nargs='+', default=[-2],
                         help='the encoder layer(s) that receives pooling. \
                         Give a list in order to concatenate several layers into one')
-    group2.add_argument('-pooling_strategy', type=PoolingStrategy.from_string,
-                        default=PoolingStrategy.REDUCE_MEAN, choices=list(PoolingStrategy),
-                        help='the pooling strategy for generating encoding vectors')
+    # group2.add_argument('-pooling_strategy', type=PoolingStrategy.from_string,
+    #                     default=PoolingStrategy.REDUCE_MEAN, choices=list(PoolingStrategy),
+    #                     help='the pooling strategy for generating encoding vectors')
     group2.add_argument('-mask_cls_sep', action='store_true', default=False,
                         help='masking the embedding on [CLS] and [SEP] with zero. \
                         When pooling_strategy is in {CLS_TOKEN, FIRST_TOKEN, SEP_TOKEN, LAST_TOKEN} \

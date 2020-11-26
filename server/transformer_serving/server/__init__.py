@@ -26,7 +26,7 @@ from zmq.utils import jsonapi
 from .helper import *
 from .http import BertHTTPProxy
 from .zmq_decor import multi_socket
-from .bert import modeling
+from .model_config import TransormerConfig
 __all__ = ['__version__', 'BertServer']
 __version__ = '1.10.0'
 import torch
@@ -139,7 +139,7 @@ class BertServer(threading.Thread):
 
         # start the sink process
         self.logger.info('start the sink')
-        self.bert_config = modeling.BertConfig.from_dicts({'max_position_embeddings': 512})
+        self.bert_config = TransormerConfig.from_dicts({'max_position_embeddings': 512})
         proc_sink = BertSink(self.args, addr_front2sink, self.bert_config)
         self.processes.append(proc_sink)
         proc_sink.start()
@@ -551,8 +551,6 @@ class BertWorker(Process):
             # return torch.tensor(result)
 
     def input_fn_builder(self, socks, sink):
-        from .bert.extract_features import convert_lst_to_features
-        from .bert.tokenization import FullTokenizer
 
         def gen():
             # Windows does not support logger in MP environment, thus get a new logger

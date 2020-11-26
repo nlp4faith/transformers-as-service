@@ -38,7 +38,7 @@ common = [
     # '-client_batch_size', '2048',
     '-max_batch_size', '256',
     # '-num_client', '1',
-    '-pooling_strategy', 'REDUCE_MEAN',
+    # '-pooling_strategy', 'REDUCE_MEAN',
     '-pooling_layer', '-2',
     '-gpu_memory_fraction', '0.2',
     '-device','0',
