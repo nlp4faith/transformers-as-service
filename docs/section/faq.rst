@@ -419,9 +419,9 @@ Note, ``device_map`` is ignored when running on CPU.
 .. _some pooling techniques I mentioned in my blog post: https://hanxiao.github.io/2018/06/24/4-Encoding-Blocks-You-Need-to-Know-Besides-LSTM-RNN-in-Tensorflow/#pooling-block
 
 
-.. _BERT code of this repo: server/bert_serving/server/bert/
+.. _BERT code of this repo: server/transformer_serving/server/bert/
 .. _original BERT repo: https://github.com/google-research/bert
-.. _especially in extract_features.py: server/bert_serving/server/bert/extract_features.py
+.. _especially in extract_features.py: server/transformer_serving/server/bert/extract_features.py
 .. _run in a docker container: #run-bert-service-on-nvidia-docker
 .. _the pretrained Chinese BERT released by Google: https://github.com/google-research/bert#pre-trained-models
 .. _Rouge-L: https://en.wikipedia.org/wiki/ROUGE_(metric)

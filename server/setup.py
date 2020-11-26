@@ -3,7 +3,7 @@ from os import path
 from setuptools import setup, find_packages
 
 # setup metainfo
-libinfo_py = path.join('bert_serving', 'server', '__init__.py')
+libinfo_py = path.join('transformer_serving', 'server', '__init__.py')
 libinfo_content = open(libinfo_py, 'r').readlines()
 version_line = [l.strip() for l in libinfo_content if l.startswith('__version__')][0]
 exec(version_line)  # produce __version__
@@ -38,9 +38,9 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ),
     entry_points={
-        'console_scripts': ['bert-serving-start=bert_serving.server.cli:main',
-                            'bert-serving-benchmark=bert_serving.server.cli:benchmark',
-                            'bert-serving-terminate=bert_serving.server.cli:terminate'],
+        'console_scripts': ['bert-serving-start=transformer_serving.server.cli:main',
+                            'bert-serving-benchmark=transformer_serving.server.cli:benchmark',
+                            'bert-serving-terminate=transformer_serving.server.cli:terminate'],
     },
     keywords='transformer pretrained model as service',
 )

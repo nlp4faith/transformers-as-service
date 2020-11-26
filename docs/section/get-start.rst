@@ -92,7 +92,7 @@ Now you can encode sentences simply as follows:
 .. highlight:: python
 .. code-block:: python
 
-    from bert_serving.client import BertClient
+    from transformer_serving.client import BertClient
     bc = BertClient()
     bc.encode(['First do it', 'then do it right', 'then do it better'])
 
@@ -120,7 +120,7 @@ One may also start the service on one (GPU) machine and call it from another (CP
 .. code-block:: python
 
     # on another CPU machine
-    from bert_serving.client import BertClient
+    from transformer_serving.client import BertClient
     bc = BertClient(ip='xx.xx.xx.xx')  # ip address of the GPU machine
     bc.encode(['First do it', 'then do it right', 'then do it better'])
 

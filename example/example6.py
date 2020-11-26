@@ -14,7 +14,7 @@ import os
 
 import GPUtil
 import tensorflow as tf
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 
 os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable()[0])
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)

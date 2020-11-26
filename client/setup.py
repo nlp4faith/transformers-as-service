@@ -3,7 +3,7 @@ from os import path
 from setuptools import setup, find_packages
 
 # setup metainfo
-libinfo_py = path.join('bert_serving', 'client', '__init__.py')
+libinfo_py = path.join('transformer_serving', 'client', '__init__.py')
 libinfo_content = open(libinfo_py, 'r').readlines()
 version_line = [l.strip() for l in libinfo_content if l.startswith('__version__')][0]
 exec(version_line)  # produce __version__
@@ -12,7 +12,7 @@ with open('requirements.txt') as f:
     require_packages = [line[:-1] if line[-1] == '\n' else line for line in f]
 
 setup(
-    name='bert_serving_client',
+    name='transformer_serving_client',
     version=__version__,  # noqa
     description='Mapping a variable-length sentence to a fixed-length vector using BERT model (Client)',
     url='https://github.com/hanxiao/bert-as-service',

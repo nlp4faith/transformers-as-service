@@ -1,36 +1,8 @@
-> **This README.md is a mirror for PyPI. Please visit https://github.com/hanxiao/bert-as-service/blob/master/README.md for the latest README.md.**
-<h1 align="center">bert-as-service</h1>
+<h1 align="center">transformer-as-service</h1>
 
-<p align="center">Using BERT model as a sentence encoding service, i.e. mapping a variable-length sentence to a fixed-length vector.</p>
+<p align="center">Using transformer pretrained model as a sentence encoding service, i.e. mapping a variable-length sentence to a fixed-length vector.</p>
 
-<p align="center">
-  <a href="https://github.com/hanxiao/bert-as-service/stargazers">
-    <img src="https://img.shields.io/github/stars/hanxiao/bert-as-service.svg?colorA=orange&colorB=orange&logo=github"
-         alt="GitHub stars">
-  </a>
-  <a href="https://pypi.org/search/?q=bert-serving">
-      <img src="https://img.shields.io/pypi/v/bert-serving-server.svg?colorB=brightgreen"
-           alt="Pypi package">
-    </a>
-  <a href="https://bert-as-service.readthedocs.io/">
-      <img src="https://readthedocs.org/projects/bert-as-service/badge/?version=latest"
-           alt="ReadTheDoc">
-    </a>
-  <a href="https://pypi.org/search/?q=bert-serving">
-      <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/bert-serving-server">
-  </a>
-  <a href="https://github.com/hanxiao/bert-as-service/issues">
-        <img src="https://img.shields.io/github/issues/hanxiao/bert-as-service.svg"
-             alt="GitHub issues">
-  </a>
-  <a href="https://github.com/hanxiao/bert-as-service/blob/master/LICENSE">
-        <img src="https://img.shields.io/github/license/hanxiao/bert-as-service.svg"
-             alt="GitHub license">
-  </a>
-  <a href="https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2Fhanxiao%2Fbert-as-service">
-  <img src="https://img.shields.io/twitter/url/https/github.com/hanxiao/bert-as-service.svg?style=social" alt="Twitter">
-  </a>      
-</p>
+Thanks for the idea from [bert-as-serivce](https://github.com/hanxiao/bert-as-service)
 
 <p align="center">
   <a href="#highlights">Highlights</a> •
@@ -41,7 +13,7 @@
   <a href="#book-tutorial">Tutorials</a> •
   <a href="#speech_balloon-faq">FAQ</a> •
   <a href="#zap-benchmark">Benchmark</a> •
-  <a href="https://hanxiao.github.io/2019/01/02/Serving-Google-BERT-in-Production-using-Tensorflow-and-ZeroMQ/" target="_blank">Blog</a>
+
   
 </p>
 
@@ -49,7 +21,7 @@
     <img src=".github/demo.gif?raw=true" width="700">
 </p>
 
-<h6 align="center">Made by Han Xiao • :globe_with_meridians: <a href="https://hanxiao.github.io">https://hanxiao.github.io</a></h6>
+<h6 align="center">Made by faith • :globe_with_meridians: <a href="https://iamfaith.github.io">https://iamfaith.github.io</a></h6>
 
 
 <center>
@@ -147,7 +119,7 @@ docker run --runtime nvidia -dit -p 5555:5555 -p 5556:5556 -v $PATH_MODEL:/model
 #### 3. Use Client to Get Sentence Encodes
 Now you can encode sentences simply as follows:
 ```python
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 bc = BertClient()
 bc.encode(['First do it', 'then do it right', 'then do it better'])
 ```
@@ -166,7 +138,7 @@ One may also start the service on one (GPU) machine and call it from another (CP
 
 ```python
 # on another CPU machine
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 bc = BertClient(ip='xx.xx.xx.xx')  # ip address of the GPU machine
 bc.encode(['First do it', 'then do it right', 'then do it better'])
 ```
@@ -698,8 +670,8 @@ Finally, one may also config CORS to restrict the public access of the server by
 
 Besides shell, one can also start a `BertServer` from python. Simply do
 ```python
-from bert_serving.server.helper import get_args_parser
-from bert_serving.server import BertServer
+from transformer_serving.server.helper import get_args_parser
+from transformer_serving.server import BertServer
 args = get_args_parser().parse_args(['-model_dir', 'YOUR_MODEL_PATH_HERE',
                                      '-port', '5555',
                                      '-port_out', '5556',
@@ -736,7 +708,7 @@ The design philosophy and technical details can be found [in my blog post](https
 
 ##### **Q:** Where is the BERT code come from?
 
-**A:** [BERT code of this repo](server/bert_serving/server/bert/) is forked from the [original BERT repo](https://github.com/google-research/bert) with necessary modification, [especially in extract_features.py](server/bert_serving/server/bert/extract_features.py).
+**A:** [BERT code of this repo](server/transformer_serving/server/bert/) is forked from the [original BERT repo](https://github.com/google-research/bert) with necessary modification, [especially in extract_features.py](server/transformer_serving/server/bert/extract_features.py).
 
 ##### **Q:** How large is a sentence vector?
 In general, each sentence is translated to a 768-dimensional vector. Depending on the pretrained BERT you are using, `pooling_strategy` and `pooling_layer` the dimensions of the output vector could be different. 

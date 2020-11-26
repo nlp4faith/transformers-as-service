@@ -17,8 +17,8 @@ import numpy as np
 import pandas as pd
 # from MulticoreTSNE import MulticoreTSNE as TSNE
 from bert_serving.client import BertClient
-from bert_serving.server import BertServer
-from bert_serving.server.helper import get_args_parser
+from transformer_serving.server import BertServer
+from transformer_serving.server.helper import get_args_parser
 
 
 

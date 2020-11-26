@@ -137,7 +137,7 @@ docker run --runtime nvidia -dit -p 5555:5555 -p 5556:5556 -v $PATH_MODEL:/model
 #### 3. Use Client to Get Sentence Encodes
 Now you can encode sentences simply as follows:
 ```python
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 bc = BertClient()
 bc.encode(['First do it', 'then do it right', 'then do it better'])
 ```
@@ -156,7 +156,7 @@ One may also start the service on one (GPU) machine and call it from another (CP
 
 ```python
 # on another CPU machine
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 bc = BertClient(ip='xx.xx.xx.xx')  # ip address of the GPU machine
 bc.encode(['First do it', 'then do it right', 'then do it better'])
 ```
@@ -688,8 +688,8 @@ Finally, one may also config CORS to restrict the public access of the server by
 
 Besides shell, one can also start a `BertServer` from python. Simply do
 ```python
-from bert_serving.server.helper import get_args_parser
-from bert_serving.server import BertServer
+from transformer_serving.server.helper import get_args_parser
+from transformer_serving.server import BertServer
 args = get_args_parser().parse_args(['-model_dir', 'YOUR_MODEL_PATH_HERE',
                                      '-port', '5555',
                                      '-port_out', '5556',
@@ -726,7 +726,7 @@ The design philosophy and technical details can be found [in my blog post](https
 
 ##### **Q:** Where is the BERT code come from?
 
-**A:** [BERT code of this repo](server/bert_serving/server/bert/) is forked from the [original BERT repo](https://github.com/google-research/bert) with necessary modification, [especially in extract_features.py](server/bert_serving/server/bert/extract_features.py).
+**A:** [BERT code of this repo](server/transformer_serving/server/bert/) is forked from the [original BERT repo](https://github.com/google-research/bert) with necessary modification, [especially in extract_features.py](server/transformer_serving/server/bert/extract_features.py).
 
 ##### **Q:** How large is a sentence vector?
 In general, each sentence is translated to a 768-dimensional vector. Depending on the pretrained BERT you are using, `pooling_strategy` and `pooling_layer` the dimensions of the output vector could be different. 

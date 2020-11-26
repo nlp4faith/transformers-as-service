@@ -13,7 +13,7 @@
 import sys
 import threading
 
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 
 
 def client_clone(id, idx):

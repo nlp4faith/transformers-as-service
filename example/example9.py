@@ -13,7 +13,7 @@
 import sys
 import time
 
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 
 if __name__ == '__main__':
     port = 6006
