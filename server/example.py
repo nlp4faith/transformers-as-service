@@ -16,7 +16,7 @@ from collections import namedtuple
 import numpy as np
 import pandas as pd
 # from MulticoreTSNE import MulticoreTSNE as TSNE
-from bert_serving.client import BertClient
+from transformer_serving.client import BertClient
 from transformer_serving.server import BertServer
 from transformer_serving.server.helper import get_args_parser
 
