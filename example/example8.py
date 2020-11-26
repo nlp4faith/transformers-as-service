@@ -4,8 +4,8 @@
 
 # NOTE: First install bert-as-service via
 # $
-# $ pip install bert-serving-server
-# $ pip install bert-serving-client
+# $ pip install serving-server
+# $ pip install serving-client
 # $
 
 # simple similarity search on FAQ

@@ -19,7 +19,7 @@ class BenchmarkClient(threading.Thread):
             from transformer_serving.client import BertClient
         except ImportError:
             raise ImportError('BertClient module is not available, it is required for benchmarking.'
-                              'Please use "pip install -U bert-serving-client" to install it.')
+                              'Please use "pip install -U serving-client" to install it.')
         with BertClient(port=self.port, port_out=self.port_out,
                         show_server_config=True, check_version=False, check_length=False) as bc:
             time_all = []

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Han Xiao <artex.xh@gmail.com> <https://hanxiao.github.io>
 import torch.multiprocessing as multiprocessing
 from torch.multiprocessing import Pool, Process, set_start_method
 try:
@@ -28,7 +27,7 @@ from .http import BertHTTPProxy
 from .zmq_decor import multi_socket
 from .model_config import TransormerConfig
 __all__ = ['__version__', 'BertServer']
-__version__ = '1.11.0'
+__version__ = '1.12.1'
 import torch
 from transformers import *
 # _tf_ver_ = check_tf_version()

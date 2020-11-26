@@ -1,5 +1,5 @@
 FROM pytorch/pytorch
-RUN pip install transformer-as-service[http] transformer
+RUN pip install transformer-as-service[http] && pip install  -i https://pypi.tuna.tsinghua.edu.cn/simple transformers
 RUN mkdir -p /app
 COPY ./entrypoint.sh /app
 WORKDIR /app

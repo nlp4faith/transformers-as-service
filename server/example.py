@@ -4,8 +4,8 @@
 
 # NOTE: First install bert-as-service via
 # $
-# $ pip install bert-serving-server
-# $ pip install bert-serving-client
+# $ pip install serving-server
+# $ pip install serving-client
 # $
 
 # visualizing a 12-layer BERT

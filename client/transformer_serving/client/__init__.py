@@ -109,7 +109,7 @@ class BertClient(object):
 
             if check_version and s_status['server_version'] != self.status['client_version']:
                 raise AttributeError('version mismatch! server version is %s but client version is %s!\n'
-                                     'consider "pip install -U bert-serving-server bert-serving-client"\n'
+                                     'consider "pip install -U serving-server serving-client"\n'
                                      'or disable version-check by "BertClient(check_version=False)"' % (
                                          s_status['server_version'], self.status['client_version']))
 
@@ -307,7 +307,7 @@ class BertClient(object):
         elif not self.token_info_available and show_tokens:
             warnings.warn('"show_tokens=True", but the server does not support showing tokenization info to clients.\n'
                           'here is what you can do:\n'
-                          '- start a new server with "bert-serving-start -show_tokens_to_client ..."\n'
+                          '- start a new server with "serving-start -show_tokens_to_client ..."\n'
                           '- or, use "encode(show_tokens=False)"')
         return r.embedding
 
@@ -457,7 +457,7 @@ class ConcurrentBertClient(BertClient):
             from transformer_serving.client import BertClient
         except ImportError:
             raise ImportError('BertClient module is not available, it is required for serving HTTP requests.'
-                              'Please use "pip install -U bert-serving-client" to install it.'
+                              'Please use "pip install -U serving-client" to install it.'
                               'If you do not want to use it as an HTTP server, '
                               'then remove "-http_port" from the command line.')
 

@@ -4,8 +4,8 @@
 
 # NOTE: First install bert-as-service via
 # $
-# $ pip install bert-serving-server
-# $ pip install bert-serving-client
+# $ pip install serving-server
+# $ pip install serving-client
 # $
 
 # solving chinese law-article classification problem: https://github.com/thunlp/CAIL/blob/master/README_en.md

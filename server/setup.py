@@ -29,7 +29,7 @@ setup(
     extras_require={
         'cpu': ['tensorflow>=1.10.0'],
         'gpu': ['tensorflow-gpu>=1.10.0'],
-        'http': ['flask', 'flask-compress', 'flask-cors', 'flask-json', 'bert-serving-client']
+        'http': ['flask', 'flask-compress', 'flask-cors', 'flask-json', 'transformer_as_client']
     },
     classifiers=(
         'Programming Language :: Python :: 3.6',
@@ -38,9 +38,9 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ),
     entry_points={
-        'console_scripts': ['bert-serving-start=transformer_serving.server.cli:main',
-                            'bert-serving-benchmark=transformer_serving.server.cli:benchmark',
-                            'bert-serving-terminate=transformer_serving.server.cli:terminate'],
+        'console_scripts': ['serving-start=transformer_serving.server.cli:main',
+                            'serving-benchmark=transformer_serving.server.cli:benchmark',
+                            'serving-terminate=transformer_serving.server.cli:terminate'],
     },
     keywords='transformer pretrained model as service',
 )
