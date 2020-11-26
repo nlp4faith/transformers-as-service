@@ -27,7 +27,7 @@ from .http import BertHTTPProxy
 from .zmq_decor import multi_socket
 from .model_config import TransormerConfig
 __all__ = ['__version__', 'BertServer']
-__version__ = '1.12.1'
+__version__ = '1.12.2'
 import torch
 from transformers import *
 # _tf_ver_ = check_tf_version()
