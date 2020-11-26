@@ -86,6 +86,14 @@ class BertConfig(object):
         return config
 
     @classmethod
+    def from_dicts(cls, dicts):
+        config = BertConfig(vocab_size=None)
+        for key, value in dicts.items():
+          config.__dict__[key] = value
+        return config
+
+
+    @classmethod
     def from_json_file(cls, json_file):
         """Constructs a `BertConfig` from a json file of parameters."""
         with tf.gfile.GFile(json_file, "r") as reader:

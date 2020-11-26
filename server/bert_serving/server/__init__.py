@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Han Xiao <artex.xh@gmail.com> <https://hanxiao.github.io>
-import multiprocessing
-import os
+import torch.multiprocessing as multiprocessing
+from torch.multiprocessing import Pool, Process, set_start_method
+try:
+     set_start_method('spawn')
+except RuntimeError:
+    pass
+
 import random
 import sys
 import threading
@@ -10,8 +15,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
-from multiprocessing import Process
-from multiprocessing.pool import Pool
+
 
 import numpy as np
 import zmq
@@ -22,11 +26,12 @@ from zmq.utils import jsonapi
 from .helper import *
 from .http import BertHTTPProxy
 from .zmq_decor import multi_socket
-
+from .bert import modeling
 __all__ = ['__version__', 'BertServer']
 __version__ = '1.10.0'
-
-_tf_ver_ = check_tf_version()
+import torch
+from transformers import *
+# _tf_ver_ = check_tf_version()
 
 
 class ServerCmd:
@@ -56,7 +61,7 @@ class BertServer(threading.Thread):
         self.args = args
         self.status_args = {k: (v if k != 'pooling_strategy' else v.value) for k, v in sorted(vars(args).items())}
         self.status_static = {
-            'tensorflow_version': _tf_ver_,
+            # 'tensorflow_version': _tf_ver_,
             'python_version': sys.version,
             'server_version': __version__,
             'pyzmq_version': zmq.pyzmq_version(),
@@ -65,16 +70,16 @@ class BertServer(threading.Thread):
         }
         self.processes = []
         self.logger.info('freeze, optimize and export graph, could take a while...')
-        with Pool(processes=1) as pool:
-            # optimize the graph, must be done in another process
-            from .graph import optimize_graph
-            self.graph_path, self.bert_config = pool.apply(optimize_graph, (self.args,))
-        # from .graph import optimize_graph
-        # self.graph_path = optimize_graph(self.args, self.logger)
-        if self.graph_path:
-            self.logger.info('optimized graph is stored at: %s' % self.graph_path)
-        else:
-            raise FileNotFoundError('graph optimization fails and returns empty result')
+        # with Pool(processes=1) as pool:
+        #     # optimize the graph, must be done in another process
+        #     from .graph import optimize_graph
+        #     self.graph_path, self.bert_config = pool.apply(optimize_graph, (self.args,))
+        
+        # if self.graph_path:
+        #     self.logger.info('optimized graph is stored at: %s' % self.graph_path)
+        # else:
+        #     raise FileNotFoundError('graph optimization fails and returns empty result')
+        
         self.is_ready = threading.Event()
 
     def __enter__(self):
@@ -134,16 +139,15 @@ class BertServer(threading.Thread):
 
         # start the sink process
         self.logger.info('start the sink')
+        self.bert_config = modeling.BertConfig.from_dicts({'max_position_embeddings': 512})
         proc_sink = BertSink(self.args, addr_front2sink, self.bert_config)
         self.processes.append(proc_sink)
         proc_sink.start()
         addr_sink = sink.recv().decode('ascii')
-
         # start the backend processes
         device_map = self._get_device_map()
         for idx, device_id in enumerate(device_map):
-            process = BertWorker(idx, self.args, addr_backend_list, addr_sink, device_id,
-                                 self.graph_path, self.bert_config)
+            process = BertWorker(idx, self.args, addr_backend_list, addr_sink, device_id, self.bert_config)
             self.processes.append(process)
             process.start()
 
@@ -453,7 +457,7 @@ class SinkJob:
 
 
 class BertWorker(Process):
-    def __init__(self, id, args, worker_address_list, sink_address, device_id, graph_path, graph_config):
+    def __init__(self, id, args, worker_address_list, sink_address, device_id, graph_config):
         super().__init__()
         self.worker_id = id
         self.device_id = device_id
@@ -470,12 +474,21 @@ class BertWorker(Process):
         self.gpu_memory_fraction = args.gpu_memory_fraction
         self.model_dir = args.model_dir
         self.verbose = args.verbose
-        self.graph_path = graph_path
+        # self.graph_path = graph_path
         self.bert_config = graph_config
         self.use_fp16 = args.fp16
         self.show_tokens_to_client = args.show_tokens_to_client
         self.no_special_token = args.no_special_token
         self.is_ready = multiprocessing.Event()
+
+        self.device = torch.device("cuda:{}".format(self.device_id) if self.device_id >= 0 else "cpu")
+
+
+        self.model = AlbertModel.from_pretrained(self.model_dir, output_attentions=False, output_hidden_states=True)
+        if self.device != 'cpu':
+            self.model.to(self.device)
+        self.model.eval()
+        self.tokenizer = BertTokenizer.from_pretrained(self.model_dir)
 
     def close(self):
         self.logger.info('shutting down...')
@@ -485,36 +498,6 @@ class BertWorker(Process):
         self.join()
         self.logger.info('terminated!')
 
-    def get_estimator(self, tf):
-        from tensorflow.python.estimator.estimator import Estimator
-        from tensorflow.python.estimator.run_config import RunConfig
-        from tensorflow.python.estimator.model_fn import EstimatorSpec
-
-        def model_fn(features, labels, mode, params):
-            with tf.gfile.GFile(self.graph_path, 'rb') as f:
-                graph_def = tf.GraphDef()
-                graph_def.ParseFromString(f.read())
-
-            input_names = ['input_ids', 'input_mask', 'input_type_ids']
-
-            output = tf.import_graph_def(graph_def,
-                                         input_map={k + ':0': features[k] for k in input_names},
-                                         return_elements=['final_encodes:0'])
-
-            return EstimatorSpec(mode=mode, predictions={
-                'client_id': features['client_id'],
-                'encodes': output[0]
-            })
-
-        config = tf.ConfigProto(device_count={'GPU': 0 if self.device_id < 0 else 1})
-        config.gpu_options.allow_growth = True
-        config.gpu_options.per_process_gpu_memory_fraction = self.gpu_memory_fraction
-        config.log_device_placement = False
-        # session-wise XLA doesn't seem to work on tf 1.10
-        # if args.xla:
-        #     config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-
-        return Estimator(model_fn=model_fn, config=RunConfig(session_config=config))
 
     def run(self):
         self._run()
@@ -527,22 +510,47 @@ class BertWorker(Process):
         # inside the process for better compatibility
         logger = set_logger(colored('WORKER-%d' % self.worker_id, 'yellow'), self.verbose)
 
-        logger.info('use device %s, load graph from %s' %
-                    ('cpu' if self.device_id < 0 else ('gpu: %d' % self.device_id), self.graph_path))
+        logger.info('use device %s' %
+                    ('cpu' if self.device_id < 0 else ('gpu: %d' % self.device_id)))
 
-        tf = import_tf(self.device_id, self.verbose, use_fp16=self.use_fp16)
-        estimator = self.get_estimator(tf)
+        # tf = import_tf(self.device_id, self.verbose, use_fp16=self.use_fp16)
+        # estimator = self.get_estimator(tf)
 
         for sock, addr in zip(receivers, self.worker_address):
             sock.connect(addr)
 
         sink_embed.connect(self.sink_address)
-        sink_token.connect(self.sink_address)
-        for r in estimator.predict(self.input_fn_builder(receivers, tf, sink_token), yield_single_examples=False):
-            send_ndarray(sink_embed, r['client_id'], r['encodes'], ServerCmd.data_embed)
-            logger.info('job done\tsize: %s\tclient: %s' % (r['encodes'].shape, r['client_id']))
+        # sink_token.connect(self.sink_address)
 
-    def input_fn_builder(self, socks, tf, sink):
+        self.input_fn_builder(receivers, sink_embed)
+
+        # for r in estimator.predict(self.input_fn_builder(receivers, sink_token), yield_single_examples=False):
+        # send_ndarray(sink_embed, r['client_id'], r['encodes'], ServerCmd.data_embed)
+        # logger.info('job done\tsize: %s\tclient: %s' % (r['encodes'].shape, r['client_id']))
+
+    def evaluate(self, inputtext):
+        encoding = self.tokenizer(inputtext, return_tensors='pt', padding=True, return_length=True)
+
+        with torch.no_grad():
+            input_ids = encoding['input_ids']
+            # input_len = encoding['length'].to(self.device)
+            mask = encoding['attention_mask']
+            if self.device != 'cpu':
+                mask = mask.to(self.device)
+                input_ids = input_ids.to(self.device)
+            outputs = self.model(input_ids, attention_mask=mask)
+            ret = outputs[0]
+            if self.device != 'cpu':
+                cpu_ret = ret.cpu().detach().numpy()
+                cpu_mask = mask.cpu().detach().numpy()
+            else:
+                cpu_ret = ret
+                cpu_mask = mask
+            result = np.dot(cpu_mask, cpu_ret.squeeze(0))
+            return result
+            # return torch.tensor(result)
+
+    def input_fn_builder(self, socks, sink):
         from .bert.extract_features import convert_lst_to_features
         from .bert.tokenization import FullTokenizer
 
@@ -550,7 +558,7 @@ class BertWorker(Process):
             # Windows does not support logger in MP environment, thus get a new logger
             # inside the process for better compatibility
             logger = set_logger(colored('WORKER-%d' % self.worker_id, 'yellow'), self.verbose)
-            tokenizer = FullTokenizer(vocab_file=os.path.join(self.model_dir, 'vocab.txt'), do_lower_case=self.do_lower_case)
+
 
             poller = zmq.Poller()
             for sock in socks:
@@ -566,36 +574,87 @@ class BertWorker(Process):
                         client_id, raw_msg = sock.recv_multipart()
                         msg = jsonapi.loads(raw_msg)
                         logger.info('new job\tsocket: %d\tsize: %d\tclient: %s' % (sock_idx, len(msg), client_id))
+                        outputs = []
+                        for sen in msg:
+                            output = self.evaluate(sen)
+                            outputs.append(output)
+                            
+                        send_ndarray(sink, client_id, np.array(outputs), ServerCmd.data_embed)
                         # check if msg is a list of list, if yes consider the input is already tokenized
-                        is_tokenized = all(isinstance(el, list) for el in msg)
-                        tmp_f = list(convert_lst_to_features(msg, self.max_seq_len,
-                                                             self.bert_config.max_position_embeddings,
-                                                             tokenizer, logger,
-                                                             is_tokenized, self.mask_cls_sep, self.no_special_token))
-                        if self.show_tokens_to_client:
-                            sink.send_multipart([client_id, jsonapi.dumps([f.tokens for f in tmp_f]),
-                                                 b'', ServerCmd.data_token])
-                        yield {
-                            'client_id': client_id,
-                            'input_ids': [f.input_ids for f in tmp_f],
-                            'input_mask': [f.input_mask for f in tmp_f],
-                            'input_type_ids': [f.input_type_ids for f in tmp_f]
-                        }
 
-        def input_fn():
-            return (tf.data.Dataset.from_generator(
-                gen,
-                output_types={'input_ids': tf.int32,
-                              'input_mask': tf.int32,
-                              'input_type_ids': tf.int32,
-                              'client_id': tf.string},
-                output_shapes={
-                    'client_id': (),
-                    'input_ids': (None, None),
-                    'input_mask': (None, None),
-                    'input_type_ids': (None, None)}).prefetch(self.prefetch_size))
+                        # is_tokenized = all(isinstance(el, list) for el in msg)
+                        # tmp_f = list(convert_lst_to_features(msg, self.max_seq_len,
+                        #                                      self.bert_config.max_position_embeddings,
+                        #                                      tokenizer, logger,
+                        #                                      is_tokenized, self.mask_cls_sep, self.no_special_token))
+                        # if self.show_tokens_to_client:
+                        #     sink.send_multipart([client_id, jsonapi.dumps([f.tokens for f in tmp_f]),
+                        #                          b'', ServerCmd.data_token])
+                        # yield {
+                        #     'client_id': client_id,
+                        #     'input_ids': [f.input_ids for f in tmp_f],
+                        #     'input_mask': [f.input_mask for f in tmp_f],
+                        #     'input_type_ids': [f.input_type_ids for f in tmp_f]
+                        # }
 
-        return input_fn
+
+
+        return gen()
+
+    # def input_fn_builder(self, socks, sink):
+    #     from .bert.extract_features import convert_lst_to_features
+    #     from .bert.tokenization import FullTokenizer
+
+    #     def gen():
+    #         # Windows does not support logger in MP environment, thus get a new logger
+    #         # inside the process for better compatibility
+    #         logger = set_logger(colored('WORKER-%d' % self.worker_id, 'yellow'), self.verbose)
+    #         tokenizer = FullTokenizer(vocab_file=os.path.join(self.model_dir, 'vocab.txt'), do_lower_case=self.do_lower_case)
+
+    #         poller = zmq.Poller()
+    #         for sock in socks:
+    #             poller.register(sock, zmq.POLLIN)
+
+    #         logger.info('ready and listening!')
+    #         self.is_ready.set()
+
+    #         while not self.exit_flag.is_set():
+    #             events = dict(poller.poll())
+    #             for sock_idx, sock in enumerate(socks):
+    #                 if sock in events:
+    #                     client_id, raw_msg = sock.recv_multipart()
+    #                     msg = jsonapi.loads(raw_msg)
+    #                     logger.info('new job\tsocket: %d\tsize: %d\tclient: %s' % (sock_idx, len(msg), client_id))
+    #                     # check if msg is a list of list, if yes consider the input is already tokenized
+    #                     is_tokenized = all(isinstance(el, list) for el in msg)
+    #                     tmp_f = list(convert_lst_to_features(msg, self.max_seq_len,
+    #                                                          self.bert_config.max_position_embeddings,
+    #                                                          tokenizer, logger,
+    #                                                          is_tokenized, self.mask_cls_sep, self.no_special_token))
+    #                     if self.show_tokens_to_client:
+    #                         sink.send_multipart([client_id, jsonapi.dumps([f.tokens for f in tmp_f]),
+    #                                              b'', ServerCmd.data_token])
+    #                     yield {
+    #                         'client_id': client_id,
+    #                         'input_ids': [f.input_ids for f in tmp_f],
+    #                         'input_mask': [f.input_mask for f in tmp_f],
+    #                         'input_type_ids': [f.input_type_ids for f in tmp_f]
+    #                     }
+
+    #     def input_fn():
+    #         return (tf.data.Dataset.from_generator(
+    #             gen,
+    #             output_types={'input_ids': tf.int32,
+    #                           'input_mask': tf.int32,
+    #                           'input_type_ids': tf.int32,
+    #                           'client_id': tf.string},
+    #             output_shapes={
+    #                 'client_id': (),
+    #                 'input_ids': (None, None),
+    #                 'input_mask': (None, None),
+    #                 'input_type_ids': (None, None)}).prefetch(self.prefetch_size))
+
+    #     return input_fn
 
 
 class ServerStatistic:
