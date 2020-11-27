@@ -24,12 +24,13 @@ setup(
         'six',
         'pyzmq>=17.1.0',
         'GPUtil>=1.3.0',
-        'termcolor>=1.1'
+        'termcolor>=1.1',
+        'transformers>=3.1.0',
     ],
     extras_require={
         'cpu': ['tensorflow>=1.10.0'],
         'gpu': ['tensorflow-gpu>=1.10.0'],
-        'http': ['flask', 'flask-compress', 'flask-cors', 'flask-json', 'transformer_as_client']
+        'http': ['fastapi', 'flask-json', 'transformer_as_client']
     },
     classifiers=(
         'Programming Language :: Python :: 3.6',

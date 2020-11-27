@@ -18,3 +18,7 @@ docker run  --rm -dit -p 5555:5555 -p 5556:5556 -p 8125:8125 -v /smb/AI_models/t
 
 
 curl -X POST -d '{"id": 123, "texts":["some texts"]}' -H "Content-Type: Application/json" 127.0.0.1:8125/encode  -vv
+
+ab -c 500 -t 30 -p data.json -T 'application/json' -r  127.0.0.1:8125/encode
+
+serving-start -http_port 8125 -num_worker 2 -http_max_connect 1000 -model_dir /home/faith/transformer_model/ALBERT -device_map 0

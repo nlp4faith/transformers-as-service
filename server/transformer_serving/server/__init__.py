@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import torch.multiprocessing as multiprocessing
 from torch.multiprocessing import Pool, Process, set_start_method
+
 try:
      set_start_method('spawn')
 except RuntimeError:
@@ -15,7 +16,6 @@ from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 
-
 import numpy as np
 import zmq
 import zmq.decorators as zmqd
@@ -24,12 +24,14 @@ from zmq.utils import jsonapi
 
 from .helper import *
 from .http import BertHTTPProxy
-from .zmq_decor import multi_socket
 from .model_config import TransormerConfig
+from .zmq_decor import multi_socket
+
 __all__ = ['__version__', 'BertServer']
-__version__ = '1.12.2'
+__version__ = '1.13.4'
 import torch
 from transformers import *
+
 # _tf_ver_ = check_tf_version()
 
 
@@ -331,7 +333,7 @@ class BertSink(Process):
                     logger.error('received a wrongly-formatted request (expected 4 frames, got %d)' % len(msg))
                     logger.error('\n'.join('field %d: %s' % (idx, k) for idx, k in enumerate(msg)), exc_info=True)
 
-                logger.info('collect %s %s (E:%d/T:%d/A:%d)' % (msg[3], job_id,
+                logger.debug('collect %s %s (E:%d/T:%d/A:%d)' % (msg[3], job_id,
                                                                 pending_jobs[job_id].progress_embeds,
                                                                 pending_jobs[job_id].progress_tokens,
                                                                 pending_jobs[job_id].checksum))
@@ -357,7 +359,7 @@ class BertSink(Process):
                 client_addr, req_id = job_info.split(b'#')
                 x, x_info = tmp.result
                 sender.send_multipart([client_addr, x_info, x, req_id])
-                logger.info('send back\tsize: %d\tjob id: %s' % (tmp.checksum, job_info))
+                logger.debug('send back\tsize: %d\tjob id: %s' % (tmp.checksum, job_info))
                 # release the job
                 tmp.clear()
                 pending_jobs.pop(job_info)
@@ -570,7 +572,7 @@ class BertWorker(Process):
                     if sock in events:
                         client_id, raw_msg = sock.recv_multipart()
                         msg = jsonapi.loads(raw_msg)
-                        logger.info('new job\tsocket: %d\tsize: %d\tclient: %s' % (sock_idx, len(msg), client_id))
+                        logger.debug('new job\tsocket: %d\tsize: %d\tclient: %s' % (sock_idx, len(msg), client_id))
                         outputs = []
                         for sen in msg:
                             output = self.evaluate(sen)
