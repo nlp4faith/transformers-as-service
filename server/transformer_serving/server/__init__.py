@@ -28,7 +28,7 @@ from .model_config import TransormerConfig
 from .zmq_decor import multi_socket
 
 __all__ = ['__version__', 'BertServer']
-__version__ = '1.13.4'
+__version__ = '1.13.5'
 import torch
 from transformers import *
 
@@ -145,12 +145,6 @@ class BertServer(threading.Thread):
         self.processes.append(proc_sink)
         proc_sink.start()
         addr_sink = sink.recv().decode('ascii')
-        # start the backend processes
-        device_map = self._get_device_map()
-        for idx, device_id in enumerate(device_map):
-            process = BertWorker(idx, self.args, addr_backend_list, addr_sink, device_id, self.bert_config)
-            self.processes.append(process)
-            process.start()
 
         # start the http-service process
         if self.args.http_port:
@@ -158,6 +152,13 @@ class BertServer(threading.Thread):
             proc_proxy = BertHTTPProxy(self.args)
             self.processes.append(proc_proxy)
             proc_proxy.start()
+
+        # start the backend processes
+        device_map = self._get_device_map()
+        for idx, device_id in enumerate(device_map):
+            process = BertWorker(idx, self.args, addr_backend_list, addr_sink, device_id, self.bert_config)
+            self.processes.append(process)
+            process.start()
 
         rand_backend_socket = None
         server_status = ServerStatistic()

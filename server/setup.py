@@ -30,7 +30,7 @@ setup(
     extras_require={
         'cpu': ['tensorflow>=1.10.0'],
         'gpu': ['tensorflow-gpu>=1.10.0'],
-        'http': ['fastapi', 'flask-json', 'transformer_as_client']
+        'http': ['fastapi', 'flask-json', 'transformer_as_client', 'uvicorn']
     },
     classifiers=(
         'Programming Language :: Python :: 3.6',
